@@ -1,57 +1,62 @@
 # A batfiles leaf repository.
 #
-# Every action below is a `symlink`, because `symlink` is the only action type
-# batfiles implements today. Each one names a `source` inside this repository
-# and a `dest` in your home directory, and `batfiles sync` makes the second
-# point at the first.
+# Two action types exist today, and both make symlinks:
+#
+#   symlink      one source, one exact destination
+#   symlink-dir  every direct child of a directory, into one directory
+#
+# The rule this repository is arranged around: if a file's destination is its
+# own name in some directory, `symlink-dir` covers it and you never touch the
+# manifest again. If the destination is a *different* name, or somewhere of its
+# own, it needs a `symlink` that says so.
 #
 # Actions run in the order they are written here.
 
 # ---------------------------------------------------------------------------
-# shell
+# files/ -> ~/.<name>
 # ---------------------------------------------------------------------------
 
-# The plainest thing a manifest can say: one file, straight into the home
-# directory. `~` is the selected home, which is your real home unless you pass
-# `--home-dir`.
+# One entry for every plain dotfile. `dot-prefix` adds the leading `.`, which
+# is why the repository can keep them undotted and readable.
+#
+# The payoff: `files/ackrc` is installed by this action and is named nowhere.
+# It was dropped into the directory, and the next sync picked it up. Adding
+# `files/inputrc` tomorrow needs no change here either.
 [[actions]]
-type = "symlink"
-id = "zshrc"
+type = "symlink-dir"
+id = "rcfiles"
 group = "shell"
-source = "shell/zshrc"
-dest = "~/.zshrc"
-
-# `id` is optional. An action without one still runs; it just cannot be named
-# on the command line once the commands that take an address exist.
-[[actions]]
-type = "symlink"
-group = "shell"
-source = "shell/zshenv"
-dest = "~/.zshenv"
-
-# The destination need not share a name, or a directory, with its source.
-# `~/.config/zsh/` does not have to exist -- missing parents are created.
-[[actions]]
-type = "symlink"
-id = "zsh-aliases"
-group = "shell"
-source = "shell/aliases.zsh"
-dest = "~/.config/zsh/aliases.zsh"
+source-dir = "files"
+dest-dir = "~"
+dot-prefix = true
 
 # ---------------------------------------------------------------------------
-# git
+# bin/ -> ~/.local/bin/<name>
 # ---------------------------------------------------------------------------
 
+# The same action without `dot-prefix`, because a script on the PATH keeps its
+# name. `~/.local/bin` need not exist — a missing `dest-dir` is created.
+#
+# A symlink carries no mode of its own, so these stay executable because the
+# files in the repository are. Keep the bit set in Git and it survives.
 [[actions]]
-type = "symlink"
-id = "gitconfig"
-group = "git"
-source = "git/gitconfig"
-dest = "~/.gitconfig"
+type = "symlink-dir"
+id = "binfiles"
+group = "bin"
+source-dir = "bin"
+dest-dir = "~/.local/bin"
 
-# The file is `git/gitignore` here and `~/.config/git/ignore` there. A dotfiles
-# repository reads better without a tree of dot-directories in it, and the
-# manifest is where the two names get reconciled.
+# ---------------------------------------------------------------------------
+# The ones that have to be named individually
+# ---------------------------------------------------------------------------
+
+# Everything below installs under a name, or in a place, that does not match
+# its source. No directory action can express that, and this is the whole of
+# when you still reach for `symlink`.
+
+# `gitignore` here, `ignore` there. A dotfiles repository reads better without
+# a tree of dot-directories in it, and the manifest is where the two naming
+# schemes get reconciled.
 [[actions]]
 type = "symlink"
 id = "gitignore"
@@ -59,13 +64,19 @@ group = "git"
 source = "git/gitignore"
 dest = "~/.config/git/ignore"
 
-# ---------------------------------------------------------------------------
-# editor
-# ---------------------------------------------------------------------------
+# Two directories away from where it lives here. Missing parents are created.
+[[actions]]
+type = "symlink"
+id = "zsh-aliases"
+group = "shell"
+source = "shell/aliases.zsh"
+dest = "~/.config/zsh/aliases.zsh"
 
-# A `source` may be a directory. One link is created at the destination and the
-# whole tree is reachable through it, so a file added under `editor/nvim/`
-# later needs no manifest change.
+# A `source` may be a directory: one link at the destination, and the whole
+# tree reachable through it. Note how this differs from `symlink-dir` above —
+# that links a directory's *children*, one link each; this links the directory
+# itself, one link total. So a file added under `editor/nvim/` later appears
+# with no sync at all.
 [[actions]]
 type = "symlink"
 id = "nvim"
@@ -73,27 +84,9 @@ group = "editor"
 source = "editor/nvim"
 dest = "~/.config/nvim"
 
-# ---------------------------------------------------------------------------
-# tmux
-# ---------------------------------------------------------------------------
-
 [[actions]]
 type = "symlink"
 id = "tmux"
 group = "tmux"
 source = "tmux/tmux.conf"
 dest = "~/.config/tmux/tmux.conf"
-
-# ---------------------------------------------------------------------------
-# bin
-# ---------------------------------------------------------------------------
-
-# Two missing parent directories away from the home, and executable: a symlink
-# carries no mode of its own, so the mode is whatever the file in the
-# repository has. Keep it executable in Git and it stays executable installed.
-[[actions]]
-type = "symlink"
-id = "scratch"
-group = "bin"
-source = "bin/scratch"
-dest = "~/.local/bin/scratch"

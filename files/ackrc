@@ -1,0 +1,9 @@
+# Installed at ~/.ackrc.
+#
+# This file is the demonstration. Nothing in batfiles.toml names it — it was
+# dropped into files/ and the next `batfiles sync` installed it, because the
+# action covering this directory installs whatever is in the directory.
+
+--smart-case
+--ignore-dir=target
+--ignore-dir=node_modules

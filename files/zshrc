@@ -1,5 +1,6 @@
 #!/bin/zsh
-# Installed at ~/.zshrc by the `zshrc` action.
+# Installed at ~/.zshrc by the `rcfiles` action, which names no file at all:
+# it installs whatever is in this directory, dotted.
 
 source ~/.zshenv
 source ~/.config/zsh/aliases.zsh

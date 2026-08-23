@@ -6,9 +6,9 @@ dotfiles repository someone would actually keep — zsh, git, neovim, tmux, and 
 script on the `PATH` — and every feature it uses is one batfiles implements
 today.
 
-Batfiles is early. Right now `sync` installs symlinks, and that is the whole of
-it, so **every action here is a `symlink` action**. As action types arrive this
-repository grows to use them; what is in it is always what works.
+Batfiles is early. Right now `sync` makes symlinks, and that is the whole of it,
+so **every action here is one of the two symlink actions**. As action types
+arrive this repository grows to use them; what is in it is always what works.
 
 ## The idea
 
@@ -22,30 +22,68 @@ simple-dotfiles/                      installs as
 ├── README.md                          (nothing — never named by the manifest)
 ├── notes/
 │   └── setting-up-a-new-machine.md    (nothing — never named by the manifest)
-├── shell/
-│   ├── zshrc                     -->  ~/.zshrc
-│   ├── zshenv                    -->  ~/.zshenv
-│   └── aliases.zsh               -->  ~/.config/zsh/aliases.zsh
-├── git/
-│   ├── gitconfig                 -->  ~/.gitconfig
-│   └── gitignore                 -->  ~/.config/git/ignore
-├── editor/
-│   └── nvim/                     -->  ~/.config/nvim        (the directory)
-│       ├── init.lua
-│       └── lua/options.lua
-├── tmux/
-│   └── tmux.conf                 -->  ~/.config/tmux/tmux.conf
-└── bin/
-    └── scratch                   -->  ~/.local/bin/scratch
+│
+├── files/                        -->  ~/.<name>             ] one action,
+│   ├── ackrc                     -->  ~/.ackrc              ] whatever is
+│   ├── gitconfig                 -->  ~/.gitconfig          ] in here
+│   ├── zshenv                    -->  ~/.zshenv             ]
+│   └── zshrc                     -->  ~/.zshrc              ]
+├── bin/                          -->  ~/.local/bin/<name>   ] one action,
+│   ├── proj                      -->  ~/.local/bin/proj     ] undotted
+│   └── scratch                   -->  ~/.local/bin/scratch  ]
+│
+├── git/gitignore                 -->  ~/.config/git/ignore      (renamed)
+├── shell/aliases.zsh             -->  ~/.config/zsh/aliases.zsh (moved)
+├── tmux/tmux.conf                -->  ~/.config/tmux/tmux.conf
+└── editor/
+    └── nvim/                     -->  ~/.config/nvim  (the directory itself)
+        ├── init.lua
+        └── lua/options.lua
 ```
 
-Only `batfiles.toml` has intrinsic meaning. Every other name in the tree becomes
-meaningful when an action references it — which is why `README.md` and
-`notes/` are installed nowhere, and why `editor/nvim/lua/options.lua` is
-installed without ever being named.
+Six actions, ten links. Only `batfiles.toml` has intrinsic meaning. Every other
+name in the tree becomes meaningful when an action references it — which is why
+`README.md` and `notes/` are installed nowhere, and why `files/ackrc` and
+`editor/nvim/lua/options.lua` are installed without ever being named.
 
 Read [`batfiles.toml`](batfiles.toml) next. It is commented action by action,
 and it is the actual thing that runs.
+
+## The two actions, and when to reach for each
+
+This is the one decision the manifest asks you to make.
+
+|                     | `symlink`                        | `symlink-dir`                             |
+|---------------------|----------------------------------|-------------------------------------------|
+| **Names**           | one source, one exact `dest`     | a `source-dir` and a `dest-dir`           |
+| **Makes**           | one link                         | one link per direct child                 |
+| **Use it when**     | the destination has a different name, or a place of its own | the destination is the file's own name in some directory |
+| **Adding a file**   | needs a new entry                | needs nothing                             |
+
+The rule of thumb: **if you would be typing the same name twice, a directory
+action already covers it.** `files/zshrc → ~/.zshrc` is the same name with a
+dot; `bin/scratch → ~/.local/bin/scratch` is the same name in another
+directory. Both are `symlink-dir`'s job, and there are two entries in this
+manifest for six files because of it.
+
+What is left over is the interesting half. `git/gitignore` installs as
+`~/.config/git/ignore` — a different name, in a different place — and
+`shell/aliases.zsh` lands two directories from where it lives. Nothing about a
+directory can express either, so each gets a `symlink` that says exactly what
+it means.
+
+### Two ways to say "directory", and they are not the same
+
+Worth pausing on, because the names are close:
+
+- **`symlink-dir` on `bin/`** makes *two* links, one per child. `~/.local/bin`
+  stays a real directory that other things can write into.
+- **`symlink` with `source = "editor/nvim"`** makes *one* link. `~/.config/nvim`
+  *is* a symlink into this repository, and everything under it is reached
+  through that one link.
+
+Neither is more correct. Pick per directory: a real directory where other
+programs also install things, one link where the whole tree is yours.
 
 ## Try it without touching your home directory
 
@@ -57,18 +95,25 @@ Nothing outside that directory is written.
 $ git clone https://github.com/batfiles-samples/simple-dotfiles.git
 $ mkdir ~/batfiles-demo
 $ batfiles --home-dir ~/batfiles-demo --batfiles-dir ./simple-dotfiles sync
-linked /home/you/batfiles-demo/.zshrc -> /home/you/simple-dotfiles/shell/zshrc
-linked /home/you/batfiles-demo/.zshenv -> /home/you/simple-dotfiles/shell/zshenv
-linked /home/you/batfiles-demo/.config/zsh/aliases.zsh -> /home/you/simple-dotfiles/shell/aliases.zsh
-linked /home/you/batfiles-demo/.gitconfig -> /home/you/simple-dotfiles/git/gitconfig
+linked /home/you/batfiles-demo/.ackrc -> /home/you/simple-dotfiles/files/ackrc
+linked /home/you/batfiles-demo/.gitconfig -> /home/you/simple-dotfiles/files/gitconfig
+linked /home/you/batfiles-demo/.zshenv -> /home/you/simple-dotfiles/files/zshenv
+linked /home/you/batfiles-demo/.zshrc -> /home/you/simple-dotfiles/files/zshrc
+linked /home/you/batfiles-demo/.local/bin/proj -> /home/you/simple-dotfiles/bin/proj
+linked /home/you/batfiles-demo/.local/bin/scratch -> /home/you/simple-dotfiles/bin/scratch
 linked /home/you/batfiles-demo/.config/git/ignore -> /home/you/simple-dotfiles/git/gitignore
+linked /home/you/batfiles-demo/.config/zsh/aliases.zsh -> /home/you/simple-dotfiles/shell/aliases.zsh
 linked /home/you/batfiles-demo/.config/nvim -> /home/you/simple-dotfiles/editor/nvim
 linked /home/you/batfiles-demo/.config/tmux/tmux.conf -> /home/you/simple-dotfiles/tmux/tmux.conf
-linked /home/you/batfiles-demo/.local/bin/scratch -> /home/you/simple-dotfiles/bin/scratch
 ```
 
+Ten links from six actions. The first four came from one `symlink-dir` entry
+and the next two from another; the directory actions install their children in
+sorted order, so the output is the same on every machine and diffs cleanly.
+
 `~/batfiles-demo/.config`, `.config/zsh`, and `.local/bin` did not exist a
-moment ago. Missing parent directories are created; nothing else is.
+moment ago. Missing parent directories are created — and so is a missing
+`dest-dir` — but nothing else is.
 
 When you are done, `rm -rf ~/batfiles-demo` removes every trace. The links are
 the only thing that was created, and deleting a link never touches what it
@@ -81,6 +126,23 @@ default — and run `batfiles sync` with no arguments. Read
 have there.
 
 ## What each part of the repository demonstrates
+
+### Adding a dotfile without editing the manifest
+
+This is what `symlink-dir` is for, and it is worth seeing once:
+
+```console
+$ echo "set completion-ignore-case on" > simple-dotfiles/files/inputrc
+$ batfiles --home-dir ~/batfiles-demo --batfiles-dir ./simple-dotfiles sync
+linked /home/you/batfiles-demo/.inputrc -> /home/you/simple-dotfiles/files/inputrc
+```
+
+No entry was added. `batfiles.toml` was not opened. The `rcfiles` action names
+the directory, not its contents, so a file that appears there is installed and
+a file that leaves it stops being.
+
+`files/ackrc` in this repository is the same thing already done — it is
+installed, and nothing in the manifest mentions it.
 
 ### Running it twice changes nothing
 
@@ -100,9 +162,9 @@ repository: /home/you/simple-dotfiles
 home:       /home/you/batfiles-demo
 config:     /home/you/.config/batfiles
 cache:      /home/you/.cache/batfiles
-unchanged /home/you/batfiles-demo/.zshrc
+unchanged /home/you/batfiles-demo/.ackrc
+unchanged /home/you/batfiles-demo/.gitconfig
 unchanged /home/you/batfiles-demo/.zshenv
-unchanged /home/you/batfiles-demo/.config/zsh/aliases.zsh
 ...
 ```
 
@@ -111,26 +173,30 @@ unchanged /home/you/batfiles-demo/.config/zsh/aliases.zsh
 `git/gitignore` installs as `~/.config/git/ignore`, and `shell/aliases.zsh`
 installs two directories away from where it lives. A dotfiles repository reads
 better without a tree of dot-directories in it; the manifest is where the two
-naming schemes get reconciled.
+naming schemes get reconciled. These are the entries a directory action cannot
+replace, which is why they are still written out one by one.
 
-### Linking a directory
+### `dot-prefix`, and the file it will not install
 
-`editor/nvim` is a single action linking a whole directory, so
-`~/.config/nvim` is one symlink and everything under it is reachable through
-that one link. Add `editor/nvim/lua/keymaps.lua` tomorrow and there is nothing
-to add to `batfiles.toml`.
+`files/` holds `zshrc`, not `.zshrc`. The repository stays greppable and `ls`
+shows you everything, and `dot-prefix = true` puts the dot on at install time.
 
-Linking each file individually is the other option, and the two differ in what
-happens to files neovim writes into that directory itself. Whichever you want,
-say it in the manifest.
+The corner worth knowing: a file in there that is *already* dotted is refused
+rather than installed as `..name`, which is a legal filename and never what
+anyone meant. If you want a genuinely dotted name in a dot-prefixed directory,
+that file wants its own `symlink` entry.
 
 ### `id` and `group`
 
-Most actions here carry an `id` and a `group`. Neither selects anything yet —
-the commands that take an address (`apply-action`, `disable-group`, and the
-rest) are not built. They are validated now, and writing them now means the
-manifest is ready when those commands arrive. One action, `shell/zshenv`, has
-no `id` on purpose: it is optional, and an action without one still runs.
+Every action here carries an `id`, and most a `group`. Neither selects anything
+yet — the commands that take an address (`apply-action`, `disable-group`, and
+the rest) are not built. They are validated now, so writing them now means the
+manifest is ready when those commands arrive.
+
+For a `symlink-dir` the `id` names the whole action, never one of its children:
+the ten links here are addressable as six things, not ten. That is deliberate —
+a directory action is all-or-nothing, and an address that could name a file
+which may or may not exist tomorrow would not be much of an address.
 
 ### A link batfiles made is repaired; anything else is refused
 
@@ -140,7 +206,7 @@ what it pointed at is untouched, so there is nothing to lose:
 
 ```console
 $ batfiles --home-dir ~/batfiles-demo --batfiles-dir ./simple-dotfiles sync
-relinked /home/you/batfiles-demo/.zshrc -> /home/you/simple-dotfiles/shell/zshrc (was /home/you/simple-dotfiles/shell/zshenv)
+relinked /home/you/batfiles-demo/.zshrc -> /home/you/simple-dotfiles/files/zshrc (was /home/you/simple-dotfiles/files/zshenv)
 ```
 
 Anything batfiles did not create is somebody's data, and until there is a
@@ -159,8 +225,15 @@ error: /home/you/batfiles-demo/.zshenv already exists and is a symlink to /etc/h
 ```
 
 Note that this is decided by where a link *points*, not by how it is spelled. A
-link written `../simple-dotfiles/shell/zshrc` is one batfiles owns; one written
-inside the repository that climbs back out of it is not.
+link written `../simple-dotfiles/files/zshrc` is one batfiles owns; one written
+inside the repository that climbs back out of it is not. And "where it points"
+means what the operating system makes of it, read from the directory the link
+is physically in — so if `~/bin` is itself a symlink somewhere else, a relative
+link sitting in it is judged from *there*, not from `~/bin`.
+
+The same goes for a whole directory a `symlink-dir` installs into: an existing
+`~/.local/bin` is used as it is, whatever it holds, and files in it that
+batfiles did not put there are left alone.
 
 ### The manifest is read strictly, and read whole
 
@@ -176,6 +249,14 @@ TOML parse error at line 1, column 1
 1 | [[actions]]
   | ^^^^^^^^^^^
 unknown field `mode`, expected one of `id`, `group`, `source`, `dest`
+```
+
+Each action type's fields are its own, so borrowing one from the other is the
+same kind of error — and the message doubles as the list of what the type does
+take:
+
+```console
+unknown field `source`, expected one of `id`, `group`, `source-dir`, `dest-dir`, `dot-prefix`
 ```
 
 So is a section belonging to a part of the format that is specified but not yet
@@ -200,10 +281,13 @@ error: invalid configuration in /home/you/simple-dotfiles/batfiles.toml: action 
 ```
 
 A `source` naming a file the repository does not contain is caught when the
-action runs, since it is the one rule that needs a filesystem:
+action runs, since it is the one rule that needs a filesystem — and so is a
+`source-dir` that turns out not to be a directory, which has no children to
+link:
 
 ```console
-error: no such file in the repository: /home/you/simple-dotfiles/shell/nope
+error: no such file in the repository: /home/you/simple-dotfiles/files/nope
+error: not a directory: /home/you/simple-dotfiles/files/zshrc
 ```
 
 ### An option that is not live yet is refused, not ignored
@@ -241,9 +325,14 @@ Because it does not exist yet. Roughly in planned order:
 | Git remotes, and splicing a remote's actions into your own manifest |
 | `init` and `clone` for setting up a new machine                     |
 
+Filtering which children a `symlink-dir` picks up — `include` and `exclude` —
+is specified but not built, and writing either is an error rather than a filter
+that silently does nothing. Until it exists, a file you do not want installed
+does not go in the directory.
+
 Also: this repository installs on Unix only. Windows compiles and every command
-runs there, but a `symlink` action is refused by name rather than performed, and
-`symlink` is the only action there is.
+runs there, but both action types are refused by name rather than performed,
+since both of them make symlinks.
 
 ## See also
 

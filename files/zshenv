@@ -1,0 +1,6 @@
+# Installed at ~/.zshenv, by the same one entry that installs every other file
+# in this directory.
+
+export EDITOR=nvim
+export PAGER=less
+export PATH="$HOME/.local/bin:$PATH"

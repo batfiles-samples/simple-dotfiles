@@ -1,0 +1,21 @@
+#!/bin/sh
+# Installed at ~/.local/bin/proj by the same action that installs `scratch`:
+# one entry in the manifest covers the whole of bin/, undotted.
+#
+# Jump to a project directory by name.
+
+set -eu
+
+root="${PROJECTS:-$HOME/code}"
+
+if [ $# -eq 0 ]; then
+	ls -1 "$root"
+	exit 0
+fi
+
+match=$(ls -1 "$root" | grep -i -- "$1" | head -1)
+if [ -z "$match" ]; then
+	printf 'no project matching %s in %s\n' "$1" "$root" >&2
+	exit 1
+fi
+printf '%s/%s\n' "$root" "$match"

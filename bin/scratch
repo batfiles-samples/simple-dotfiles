@@ -1,5 +1,5 @@
 #!/bin/sh
-# Installed at ~/.local/bin/scratch, which is on the PATH that shell/zshenv
+# Installed at ~/.local/bin/scratch, which is on the PATH that files/zshenv
 # sets. Make a dated scratch directory and print its path.
 
 set -eu

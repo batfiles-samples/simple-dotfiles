@@ -1,0 +1,5 @@
+# Installed at ~/.zshenv by an action with no `id`.
+
+export EDITOR=nvim
+export PAGER=less
+export PATH="$HOME/.local/bin:$PATH"

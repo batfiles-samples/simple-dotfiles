@@ -1,0 +1,9 @@
+#!/bin/sh
+# Installed at ~/.local/bin/scratch, which is on the PATH that shell/zshenv
+# sets. Make a dated scratch directory and print its path.
+
+set -eu
+
+dir="${TMPDIR:-/tmp}/scratch-$(date +%Y%m%d-%H%M%S)"
+mkdir -p "$dir"
+printf '%s\n' "$dir"

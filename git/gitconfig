@@ -1,0 +1,15 @@
+; Installed at ~/.gitconfig. Note that the excludesfile below is the other
+; half of the `gitignore` action -- the two destinations were chosen together.
+
+[core]
+	excludesfile = ~/.config/git/ignore
+
+[init]
+	defaultBranch = main
+
+[pull]
+	rebase = true
+
+[alias]
+	st = status --short
+	lg = log --oneline --graph --decorate

@@ -1,0 +1,99 @@
+# A batfiles leaf repository.
+#
+# Every action below is a `symlink`, because `symlink` is the only action type
+# batfiles implements today. Each one names a `source` inside this repository
+# and a `dest` in your home directory, and `batfiles sync` makes the second
+# point at the first.
+#
+# Actions run in the order they are written here.
+
+# ---------------------------------------------------------------------------
+# shell
+# ---------------------------------------------------------------------------
+
+# The plainest thing a manifest can say: one file, straight into the home
+# directory. `~` is the selected home, which is your real home unless you pass
+# `--home-dir`.
+[[actions]]
+type = "symlink"
+id = "zshrc"
+group = "shell"
+source = "shell/zshrc"
+dest = "~/.zshrc"
+
+# `id` is optional. An action without one still runs; it just cannot be named
+# on the command line once the commands that take an address exist.
+[[actions]]
+type = "symlink"
+group = "shell"
+source = "shell/zshenv"
+dest = "~/.zshenv"
+
+# The destination need not share a name, or a directory, with its source.
+# `~/.config/zsh/` does not have to exist -- missing parents are created.
+[[actions]]
+type = "symlink"
+id = "zsh-aliases"
+group = "shell"
+source = "shell/aliases.zsh"
+dest = "~/.config/zsh/aliases.zsh"
+
+# ---------------------------------------------------------------------------
+# git
+# ---------------------------------------------------------------------------
+
+[[actions]]
+type = "symlink"
+id = "gitconfig"
+group = "git"
+source = "git/gitconfig"
+dest = "~/.gitconfig"
+
+# The file is `git/gitignore` here and `~/.config/git/ignore` there. A dotfiles
+# repository reads better without a tree of dot-directories in it, and the
+# manifest is where the two names get reconciled.
+[[actions]]
+type = "symlink"
+id = "gitignore"
+group = "git"
+source = "git/gitignore"
+dest = "~/.config/git/ignore"
+
+# ---------------------------------------------------------------------------
+# editor
+# ---------------------------------------------------------------------------
+
+# A `source` may be a directory. One link is created at the destination and the
+# whole tree is reachable through it, so a file added under `editor/nvim/`
+# later needs no manifest change.
+[[actions]]
+type = "symlink"
+id = "nvim"
+group = "editor"
+source = "editor/nvim"
+dest = "~/.config/nvim"
+
+# ---------------------------------------------------------------------------
+# tmux
+# ---------------------------------------------------------------------------
+
+[[actions]]
+type = "symlink"
+id = "tmux"
+group = "tmux"
+source = "tmux/tmux.conf"
+dest = "~/.config/tmux/tmux.conf"
+
+# ---------------------------------------------------------------------------
+# bin
+# ---------------------------------------------------------------------------
+
+# Two missing parent directories away from the home, and executable: a symlink
+# carries no mode of its own, so the mode is whatever the file in the
+# repository has. Keep it executable in Git and it stays executable installed.
+[[actions]]
+type = "symlink"
+id = "scratch"
+group = "bin"
+source = "bin/scratch"
+dest = "~/.local/bin/scratch"

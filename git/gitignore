@@ -1,0 +1,5 @@
+# Installed at ~/.config/git/ignore -- the global one, not this repository's.
+
+.DS_Store
+*.swp
+*~
